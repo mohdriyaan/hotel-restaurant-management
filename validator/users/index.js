@@ -2,11 +2,11 @@ import { body,validationResult } from "express-validator";
 
 function usersRegisterValidation(){
     return[
-        body("fullName","Name is required and the length should be between 2 and 50.").isString().isLength({min:2,max:50}),
-        body("email","Email is required").isEmail(),
-        body("phone","Phone is required").isMobilePhone(),
-        body("address","Address is required and the length should be between 5 and 100").isLength({min:5,max:100}),
-        body("password","Password is required and the minimum length should be 6.").isLength({min:6}),
+        body("fullName","Name is required").isLength({min:2,max:50}).withMessage("Name should have length between 2 and 50").isString().withMessage("Name should have only characters"),
+        body("email","Email is required").isEmail().withMessage("Email should be valid."),
+        body("phone","Phone is required").isMobilePhone().withMessage("Phone should be valid"),
+        body("address","Address is required").isLength({min:5,max:100}).withMessage("Address Length should be between 5 and 100").isString().withMessage("Address should be characters only"),
+        body("password","Password is required and the minimum length should be 6.").isLength({min:6}).withMessage("Password Length should be equal or greater than 6"),
         body("order","Order is Required ").isArray(),
         body("confirmPassword","Confirm Pssword is Required").custom((value,{req})=>{
             if(value!==req.body.password){
@@ -18,6 +18,19 @@ function usersRegisterValidation(){
     ]
 }
 
+function userLoginValidation(){
+    return[
+        body("email","Email is Required").isEmail().withMessage("Email should be valid."),
+        body("password","Password is Required").isLength({min:6}).withMessage("Password Length should greater or equal to 6")
+    ]
+}
+
+function createOrderValidator(){
+    return[
+        body("food","Order is required").isLength({min:3,max:25}).withMessage("Order Length should be between 3 and 25.").isString().withMessage("Order should be characters only")
+    ]
+}
+
 function errorValidator(req,res,next){
     const errors = validationResult(req)
     if(!errors.isEmpty()){
@@ -26,4 +39,5 @@ function errorValidator(req,res,next){
     return next()
 }
 
-export {usersRegisterValidation,errorValidator}
+export {usersRegisterValidation,userLoginValidation,createOrderValidator,errorValidator}
+

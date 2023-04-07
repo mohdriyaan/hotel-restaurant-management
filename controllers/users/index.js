@@ -1,6 +1,6 @@
 import express from "express"
 import usersModel from "../../models/users/index.js"
-import { usersRegisterValidation,errorValidator } from "../../validator/users/index.js"
+import { usersRegisterValidation,userLoginValidation,createOrderValidator,errorValidator } from "../../validator/users/index.js"
 
 const router = express.Router()
 
@@ -22,17 +22,33 @@ router.post("/register",
     }
 })
 
-router.post("/order/:id",async(req,res)=>{
+router.post("/login",userLoginValidation(),errorValidator,async(req,res)=>{
+    try {
+        let email = req.body.email
+        let password= req.body.password
+        let emailDB = await usersModel.distinct("email")
+        let passwordDB = await usersModel.distinct("password")
+        if(!email.includes(emailDB)){
+            res.status(404).json({message:"Email Not Found in the Database."})
+            return
+        }else if(!password.includes(passwordDB)){
+            res.status(404).json({message:"Password Not Found in the Database."})
+            return
+        }else{
+            res.status(200).json({message:"Login User Successfull."})
+            console.log("Login User Successfull.")
+        }
+    } catch (error) {
+        
+    }
+})
+
+router.post("/order/:id",createOrderValidator(),errorValidator,async(req,res)=>{
     try {
         let _idData = req.params.id
         let idfromDB = await usersModel.distinct("_id")
         if(!idfromDB.includes(_idData)){
             res.status(404).json({message:"_id Not Found in the Database."})
-            return
-        }
-        if(req.body.food==null||req.body.food==""){
-            res.status(404).json({message:"Order has not been entered"})
-            console.log("Order has not been entered")
             return
         }
         let insertData = await usersModel.updateOne({_id:`${_idData}`},{$push:{order:req.body.food}})

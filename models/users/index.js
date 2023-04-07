@@ -32,19 +32,8 @@ const usersSchema = new mongoose.Schema({
   order:{
     type:Array,
     required:true,
-    items:{
-        type:[{
-            type:Object,
-            properties:{
-               food:{
-                type:Object,
-                required:true
-               } 
-            }
-        }]
-    }
+   
   }
-
 });
 
 
