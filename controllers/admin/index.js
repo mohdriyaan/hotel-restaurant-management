@@ -1,17 +1,14 @@
 import express from "express"
 import adminModel from "../../models/admin/index.js"
-// import idGenerate from "../../utils/id.js"
+import { adminRegisterValidation,errorMiddleware } from "../../validator/chef/index.js"
 
 
 const router = express.Router()
 
-// router.use(express.json())
 
-router.post("/register",async(req,res)=>{
+router.post("/register",adminRegisterValidation(),errorMiddleware,async(req,res)=>{
     try {
-        // let _id=idGenerate(10)
         let clientData=req.body
-        // console.log(clientData,"clientData")
         let clientVerifyData = new adminModel(clientData)
         await clientVerifyData.save()
         res.status(201).json({message:"Chef Registered Successfully"})

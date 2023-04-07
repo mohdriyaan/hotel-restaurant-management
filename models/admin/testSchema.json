@@ -5,6 +5,7 @@
     "email":"alex123@gmail.com",
     "phone":"8907897890",
     "address":"Hyd",
-    "password":"#alex321"
+    "password":"#alex321",
+    "confirmPassword":"#alex321"
 }
 

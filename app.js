@@ -15,7 +15,7 @@ app.get("/",(req,res)=>{
     res.status(200).send("<h1>Hotel Management</h1>")
 })
 
-app.use("/api/admin",adminAPI)
+app.use("/api/chef",adminAPI)
 app.use("/api/users",userAPI)
 
 app.use((req,res)=>{
