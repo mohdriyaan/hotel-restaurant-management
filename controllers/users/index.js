@@ -1,12 +1,15 @@
 import express from "express"
 import usersModel from "../../models/users/index.js"
-
+import { usersRegisterValidation,errorValidator } from "../../validator/users/index.js"
 
 const router = express.Router()
 
 router.use(express.json())
 
-router.post("/register",async(req,res)=>{
+router.post("/register",
+    usersRegisterValidation(),
+    errorValidator,
+    async(req,res)=>{
     try {
         let clientData=req.body
         let clientVerifyData = new usersModel(clientData)
