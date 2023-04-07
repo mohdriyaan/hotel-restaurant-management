@@ -1,3 +1,5 @@
+<h1>Hotel Resturant Management System Application</h1>
+
 A Hotel Resturant Management System Application is a Software Program that allows hotels and resturants to manage their day-to-day operations more efficiently. 
 
 The Application is designed to automate and streamline hotel management processes, such as ordering food and inventory management.
