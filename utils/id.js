@@ -1,11 +1,11 @@
 export default function idGenerate(len) {
     let arr = [];
     let random;
-    let otpJoin;
+    let idJoin;
     for (let i = 0; i < len; i++) {
       random = Math.floor(Math.random() * 10);
       arr.push(random);
-      otpJoin = arr.join("");
+      idJoin = arr.join("");
     }
-    return +otpJoin;
+    return +idJoin;
 }

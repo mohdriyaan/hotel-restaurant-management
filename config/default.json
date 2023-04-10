@@ -1,4 +1,20 @@
 {
+    "URL":"http://192.168.1.6:5000",
     "PORT":5000,
-    "DB_URI":"mongodb+srv://riyaan:riyaan@riyaan-cluster.udcs0wq.mongodb.net/hotel-management"
+    "DB_URI":"mongodb+srv://riyaan:riyaan@riyaan-cluster.udcs0wq.mongodb.net/hotel-management",
+    "EMAIL_SMTP": {
+        "HOST": "cpl12.main-hosting.eu",
+        "AUTH": {
+            "USER": "suhail@suhailroushan.com",
+            "PASS": "+Ya-@DhRk&cP"
+        },
+        "PORT": 465
+    },
+    "SEND_SMS": {
+        "TWILIO_SID": "AC3f70e8a0672eee0bc5b63e7d42b100f4",
+        "TWILIO_TOKEN": "1e090e44d69814eb4d57a0bcc47705f8",
+        "TWILIO_NUMBER": "+16067755471"
+    },
+    "JWT_KEY":"#Riyaan123"
 }
+

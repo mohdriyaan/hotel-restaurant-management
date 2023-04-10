@@ -29,11 +29,40 @@ const usersSchema = new mongoose.Schema({
     type:String,
     required:true,
   },
+  userVerified:{
+    email:{
+      required:true,
+      type:Boolean,
+      default:false
+    },
+    phone:{
+      required:true,
+      type:Boolean,
+      default:false
+    }
+  },
+  userVerifiedString:{
+    email:{
+      type:String,
+      required:true,
+      default:null
+    },
+    phone:{
+      type:String,
+      default:null,
+      required:true
+    }
+  },
   order:{
     type:Array,
     required:true,
-   
+  },
+  createdAt:{
+    type:Date,
+    required:true,
+    default:Date.now()
   }
+ 
 });
 
 

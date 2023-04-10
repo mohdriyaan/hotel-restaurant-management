@@ -1,7 +1,13 @@
 import express from "express"
 import usersModel from "../../models/users/index.js"
 import { usersRegisterValidation,userLoginValidation,createOrderValidator,errorValidator } from "../../validator/users/index.js"
- 
+import bcrypt from "bcrypt" 
+import randomString from "../../utils/randomString.js"
+import jwt from "jsonwebtoken"
+import config from "config"
+import sendEmail from "../../utils/sendEmail.js"
+import sendSMS from "../../utils/sendSMS.js"
+// import { emailToken,phoneToken } from "../../utils/jwt.js"
 
 const router = express.Router()
 
@@ -12,36 +18,165 @@ router.post("/register",
     errorValidator,
     async(req,res)=>{
     try {
-        let clientData=req.body
-        let clientVerifyData = new usersModel(clientData)
-        await clientVerifyData.save()
+        // Destructuring to get the specific requested data in the body
+        let {fullName,email,phone,address,password}=req.body
+        
+        // Checking if the user is already registered or Not
+        let emailinDB = await usersModel.findOne({email})
+        if(emailinDB){
+            console.error("User is Already Registered.Verify it Again.")
+            return res.status(401).json({mesage:"User Already Registered.Verify it Again."})
+        }
+
+        // Password Hashing
+        let clientData = await usersModel(req.body)
+        clientData.password = await bcrypt.hash(password,10)
+
+        // Random String
+        
+        clientData.userVerifiedString.phone = randomString(8)
+        clientData.userVerifiedString.email = randomString(10)
+        
+        //JWT Sign
+        let key = config.get("JWT_KEY")
+        
+        let phoneToken = jwt.sign(
+            {token:clientData.userVerifiedString.phone},
+            key,
+            {expiresIn:"1h"}
+        )
+        
+        let emailToken = jwt.sign(
+            {token:clientData.userVerifiedString.email},
+            key,
+            {expiresIn:'1h'}
+            // 10m 30m 1h  4h   1d
+        )
+        
+        console.log("Email:=",emailToken)
+        console.log("Phone:=",phoneToken)
+
+        // Send Email
+        console.log(
+        `Hi ${fullName}, Please click the given link to verify your phone ${config.get(
+          "URL"
+        )}/api/users/phone/verify/${phoneToken}`
+      );
+      console.log(`Hi ${fullName} <br/>
+            Thank you for Signing Up. Please <a href='${config.get(
+              "URL"
+            )}/api/users/email/verify/${emailToken}'>Click Here </a>
+            to verify your Email Address. <br/><br/>
+            Thank you <br/>`)
+        // await sendEmail({
+        //       to: email,
+        //       subject: "User Account Verification - Riyaan Solutions",
+        //       html: `Hi ${fullName} <br/>
+        //         Thank you for Signing Up. Please <a href='${config.get(
+        //         "URL"
+        //         )}/api/users/email/verify/${emailToken}'>Click Here </a>
+        //         to verify your Email Address. <br/><br/>
+        //         Thank you <br/>
+        //         <b>Team Riyaan Solutions.</b>`,
+        //     });
+
+        
+        // Send SMS    
+        // await sendSMS({
+        //     body: `Hi ${fullName}, Please click the given link to verify your phone:- 
+        //     ${config.get("URL")}/api/users/phone/verify/${phoneToken}`,
+        //     phone:`+91`+`${phone}`
+        // });
+
+        await clientData.save()
         res.status(201).json({message:"User Registered Successfully"}) 
         console.log("User Registered Successfully")   
     } catch (error) {
         console.log(error.errors)
-        res.status(500).json({message:error.errors})
+        res.status(501).json({message:error.errors})
+    }
+})
+
+router.get("/phone/verify/:token",async(req,res)=>{
+    try {
+        let {token} = req.params
+        let key = config.get("JWT_KEY")
+        let verify = jwt.verify(token,key)
+        if(!verify){
+            return res.status(401).json({message:"Token Expired or Invalid URL"})
+        }
+        let clientData = await usersModel.findOne({
+            "userVerifiedString.phone": verify.token
+        })
+
+        if(clientData.userVerified.phone){
+            return res.status(401).json({message:"User Verified Already"})
+        }
+
+        clientData.userVerified.phone = true
+        await clientData.save()
+        res.status(200).send("<h1>Phone Verified Successfully</h1>")
+    } catch (error) {
+        console.error(error)
+        res.status(501).json({message:"Internal Server Error"})
+    }
+})
+
+router.get("/email/verify/:token",async(req,res)=>{
+    try {
+        let {token} = req.params
+        let key = config.get("JWT_KEY")
+        let verify = jwt.verify(token,key)
+        if(!verify){
+            return res.status(401).json({message:"Token Expired or Invalid URL"})
+        }
+        let clientData = await usersModel.findOne({
+            "userVerifiedString.email": verify.token
+        })
+
+        if(clientData.userVerified.email==true){
+            return res.status(401).json({message:"User Verified Already"})
+        }
+
+        clientData.userVerified.email = true
+        await clientData.save()
+        res.status(200).send("<h1>Email Verified Successfully</h1>")
+    } catch (error) {
+        console.error(error)
+        res.status(501).json({message:"Internal Server Error"})
     }
 })
 
 router.post("/login",userLoginValidation(),errorValidator,async(req,res)=>{
     try {
-        let email = req.body.email
-        let password= req.body.password
-        let emailDB = await usersModel.distinct("email")
-        let passwordDB = await usersModel.distinct("password")
-        if(!email.includes(emailDB)){
-            res.status(404).json({message:"Email Not Found in the Database."})
-            return
-        }else if(!password.includes(passwordDB)){
-            res.status(404).json({message:"Password Not Found in the Database."})
-            return
-        }else{
-            res.status(200).json({message:"Login User Successfull."})
-            console.log("Login User Successfull.")
+        let {email,password}=req.body
+        let emailinDB = await usersModel.distinct("email")
+        // console.log(clientData)
+        let verify
+        if(emailinDB.includes(email)){
+            let passwordinDB = await usersModel.findOne({email:email},{password:1})
+            let userVerification = await usersModel.findOne({email:email},{userVerified:1})
+            if(userVerification.userVerified.email==false||userVerification.userVerified.phone==false){
+                return res.status(401).json({message:"Email And Phone is Not Verified."})
+            }else{
+            verify = await bcrypt.compare(password,passwordinDB.password)
+            }
         }
-    } catch (error) {
+        if(!verify){
+            return res.status(401).json({message:"Invalid Details. Please Register"})
+        }
+
+        res.status(200).json({message:"Login User Successfull."})
+        console.log("Login User Successfull.")
         
+    } catch (error) {
+        console.error(error)
+        res.status(500).json({message:"Internal Server Error"})
     }
+})
+
+router.post("/resendEmail/:emailID",async(req,res)=>{
+
 })
 
 router.post("/order/:id",createOrderValidator(),errorValidator,async(req,res)=>{
