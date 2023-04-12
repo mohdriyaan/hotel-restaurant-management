@@ -12,7 +12,7 @@
     },
     "SEND_SMS": {
         "TWILIO_SID": "AC3f70e8a0672eee0bc5b63e7d42b100f4",
-        "TWILIO_TOKEN": "1e090e44d69814eb4d57a0bcc47705f8",
+        "TWILIO_TOKEN": "a4723bfd6a8acc3075092b09e7f6458d",
         "TWILIO_NUMBER": "+16067755471"
     },
     "JWT_KEY":"#Riyaan123"

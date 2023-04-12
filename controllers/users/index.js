@@ -33,7 +33,7 @@ router.post("/register",
         clientData.password = await bcrypt.hash(password,10)
 
         // Random String
-        clientData.userVerifiedString.phone = randomString(8)
+        clientData.userVerifiedString.phone = randomString(10)
         clientData.userVerifiedString.email = randomString(10)
         
         //JWT Sign
