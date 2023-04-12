@@ -7,7 +7,7 @@ import jwt from "jsonwebtoken"
 import config from "config"
 import sendEmail from "../../utils/sendEmail.js"
 import sendSMS from "../../utils/sendSMS.js"
-// import { emailToken,phoneToken } from "../../utils/jwt.js"
+
 
 const router = express.Router()
 
@@ -33,7 +33,6 @@ router.post("/register",
         clientData.password = await bcrypt.hash(password,10)
 
         // Random String
-        
         clientData.userVerifiedString.phone = randomString(8)
         clientData.userVerifiedString.email = randomString(10)
         
@@ -56,37 +55,39 @@ router.post("/register",
         console.log("Email:=",emailToken)
         console.log("Phone:=",phoneToken)
 
-        // Send Email
-        console.log(
-        `Hi ${fullName}, Please click the given link to verify your phone ${config.get(
-          "URL"
-        )}/api/users/phone/verify/${phoneToken}`
-      );
-      console.log(`Hi ${fullName} <br/>
-            Thank you for Signing Up. Please <a href='${config.get(
-              "URL"
-            )}/api/users/email/verify/${emailToken}'>Click Here </a>
-            to verify your Email Address. <br/><br/>
-            Thank you <br/>`)
-        // await sendEmail({
-        //       to: email,
-        //       subject: "User Account Verification - Riyaan Solutions",
-        //       html: `Hi ${fullName} <br/>
+        // Testing
+        //     console.log(
+        //     `Hi ${fullName}, Please click the given link to verify your phone ${config.get(
+        //       "URL"
+        //     )}/api/users/phone/verify/${phoneToken}`
+        //   );
+        //   console.log(`Hi ${fullName} <br/>
         //         Thank you for Signing Up. Please <a href='${config.get(
-        //         "URL"
+        //           "URL"
         //         )}/api/users/email/verify/${emailToken}'>Click Here </a>
         //         to verify your Email Address. <br/><br/>
-        //         Thank you <br/>
-        //         <b>Team Riyaan Solutions.</b>`,
-        //     });
+        //         Thank you <br/>`)
+        
+        // Send Email
+        await sendEmail({
+              to: email,
+              subject: "User Account Verification - Riyaan Solutions",
+              html: `Hi ${fullName} <br/>
+                Thank you for Signing Up. Please <a href='${config.get(
+                "URL"
+                )}/api/users/email/verify/${emailToken}'>Click Here </a>
+                to verify your Email Address. <br/><br/>
+                Thank you <br/>
+                <b>Team Riyaan Solutions.</b>`,
+            });
 
         
         // Send SMS    
-        // await sendSMS({
-        //     body: `Hi ${fullName}, Please click the given link to verify your phone:- 
-        //     ${config.get("URL")}/api/users/phone/verify/${phoneToken}`,
-        //     phone:`+91`+`${phone}`
-        // });
+        await sendSMS({
+            body: `Hi ${fullName}, Please click the given link to verify your phone:- 
+            ${config.get("URL")}/api/users/phone/verify/${phoneToken}`,
+            phone:`+91`+`${phone}`
+        });
 
         await clientData.save()
         res.status(201).json({message:"User Registered Successfully"}) 
@@ -151,13 +152,14 @@ router.post("/login",userLoginValidation(),errorValidator,async(req,res)=>{
     try {
         let {email,password}=req.body
         let emailinDB = await usersModel.distinct("email")
-        // console.log(clientData)
         let verify
         if(emailinDB.includes(email)){
             let passwordinDB = await usersModel.findOne({email:email},{password:1})
             let userVerification = await usersModel.findOne({email:email},{userVerified:1})
-            if(userVerification.userVerified.email==false||userVerification.userVerified.phone==false){
-                return res.status(401).json({message:"Email And Phone is Not Verified."})
+            if(userVerification.userVerified.email==false){
+                return res.status(401).json({message:"Email is Not Verified."})
+            }else if(userVerification.userVerified.phone==false){
+                return res.status(401).json({message:"Phone is Not Verified."})
             }else{
             verify = await bcrypt.compare(password,passwordinDB.password)
             }
@@ -173,10 +175,6 @@ router.post("/login",userLoginValidation(),errorValidator,async(req,res)=>{
         console.error(error)
         res.status(500).json({message:"Internal Server Error"})
     }
-})
-
-router.post("/resendEmail/:emailID",async(req,res)=>{
-
 })
 
 router.post("/order/:id",createOrderValidator(),errorValidator,async(req,res)=>{
