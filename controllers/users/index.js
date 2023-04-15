@@ -33,11 +33,12 @@ router.post("/register",
         clientData.password = await bcrypt.hash(password,10)
 
         // Random String
-        clientData.userVerifiedString.phone = randomString(10)
-        clientData.userVerifiedString.email = randomString(10)
+        clientData.userVerifiedString.phone = randomString(8)
+        clientData.userVerifiedString.email = randomString(8)
         
-        //JWT Sign
+        // JWT Sign
         let key = config.get("JWT_KEY")
+        
         
         let phoneToken = jwt.sign(
             {token:clientData.userVerifiedString.phone},
@@ -52,8 +53,8 @@ router.post("/register",
             // 10m 30m 1h  4h   1d
         )
         
-        console.log("Email:=",emailToken)
-        console.log("Phone:=",phoneToken)
+        // console.log("Email:=",emailToken)
+        // console.log("Phone:=",phoneToken)
 
         // Testing
         //     console.log(
@@ -70,22 +71,21 @@ router.post("/register",
         
         // Send Email
         await sendEmail({
-              to: email,
-              subject: "User Account Verification - Riyaan Solutions",
-              html: `Hi ${fullName} <br/>
-                Thank you for Signing Up. Please <a href='${config.get(
-                "URL"
-                )}/api/users/email/verify/${emailToken}'>Click Here </a>
-                to verify your Email Address. <br/><br/>
-                Thank you <br/>
-                <b>Team Riyaan Solutions.</b>`,
-            });
+            to: email,
+            subject: "User Account Verification - Riyaan Solutions",
+            html: `Hi ${fullName} <br/>
+              Thank you for Signing Up. Please <a href='${config.get(
+              "URL"
+              )}/api/users/email/verify/${emailToken}'>Click Here </a>
+              to verify your Email Address. <br/><br/>
+              Thank you <br/>
+              <b>Team Riyaan Solutions.</b>`,
+        });
 
         
         // Send SMS    
         await sendSMS({
-            body: `Hi ${fullName}, Please click the given link to verify your phone:- 
-            ${config.get("URL")}/api/users/phone/verify/${phoneToken}`,
+            body: `Hi ${fullName}, Please click the given link to verify your phone:- ${config.get("URL")}/api/users/phone/verify/${phoneToken}`,
             phone:`+91`+`${phone}`
         });
 
@@ -173,6 +173,86 @@ router.post("/login",userLoginValidation(),errorValidator,async(req,res)=>{
         
     } catch (error) {
         console.error(error)
+        res.status(500).json({message:"Internal Server Error"})
+    }
+})
+
+router.post("/resend/email/:emailID",async(req,res)=>{
+    try {
+        let email = req.params.emailID
+        let emailInDB = await usersModel.distinct("email")
+        if(!emailInDB.includes(email)){
+            return res.status(404).json({message:"Email Not Found IN DB."})
+        }
+        let fullName = await usersModel.findOne({email:email},{fullName:1})
+        let usersVerification = await usersModel.findOne({email:email},{userVerified:1})
+        let userVerificationString = await usersModel.findOne({email:email},{userVerifiedString:1})
+        if(usersVerification.userVerified.email==false){
+            let key = config.get("JWT_KEY")
+        
+            // let phoneToken = jwt.sign(
+            //     {token:clientData.userVerifiedString.phone},
+            //     key,
+            //     {expiresIn:"1h"}
+            // )
+            let emailToken = jwt.sign(
+                {token:userVerificationString.userVerifiedString.email},
+                key,
+                {expiresIn:'1h'}
+                // 10m 30m 1h  4h   1d
+            )
+            
+            await sendEmail({
+                to: email,
+                subject: "User Account Verification - Riyaan Solutions",
+                html: `Hi ${fullName.fullName} <br/>
+                  Thank you for Signing Up. Please <a href='${config.get(
+                  "URL"
+                  )}/api/users/email/verify/${emailToken}'>Click Here </a>
+                  to verify your Email Address. <br/><br/>
+                  Thank you <br/>
+                  <b>Team Riyaan Solutions.</b>`,
+            });
+    
+        }else{
+           return res.status(401).json({message:"User Verified Already"})
+        }
+
+        res.status(200).json({message:"Email has been Resent "})
+
+    } catch (error) {
+        res.status(500).json({message:"Internal Server Error"})
+    }
+})
+
+router.post("/resend/phone/:phone",async(req,res)=>{
+    try {
+        let phone = req.params.phone
+        let phoneInDB = await usersModel.distinct("phone")
+        if(!phoneInDB.includes(phone)){
+            return res.status(404).json({message:"Phone Not Found IN DB."})
+        }
+        let fullName = await usersModel.findOne({phone:phone},{fullName:1})
+        let usersVerification = await usersModel.findOne({phone:phone},{userVerified:1})
+        let userVerificationString = await usersModel.findOne({phone:phone},{userVerifiedString:1})
+        if(usersVerification.userVerified.phone==false){
+            let key = config.get("JWT_KEY")
+            let phoneToken = jwt.sign(
+                {token:userVerificationString.userVerifiedString.phone},
+                key,
+                {expiresIn:"1h"}
+            )
+
+            await sendSMS({
+                body: `Hi ${fullName.fullName}, Please click the given link to verify your phone:- ${config.get("URL")}/api/users/phone/verify/${phoneToken}`,
+                phone:`+91`+`${phone}`
+            });
+        }else{
+            return res.status(401).json({message:"User Verified Already"})
+        }
+        res.status(200).json({message:"SMS Has Been Resent"})
+
+    } catch (error) {
         res.status(500).json({message:"Internal Server Error"})
     }
 })

@@ -37,6 +37,35 @@ const adminSchema = new mongoose.Schema({
   password:{
     type:String,
     required:true,
+  },
+  adminVerified:{
+    email:{
+      required:true,
+      type:Boolean,
+      default:false
+    },
+    phone:{
+      required:true,
+      type:Boolean,
+      default:false
+    }
+  },
+  adminVerifiedString:{
+    email:{
+      required:true,
+      type:String,
+      default:null
+    },
+    phone:{
+      required:true,
+      type:String,
+      default:null
+    }
+  },
+  createdAt:{
+    type:Date,
+    required:true,
+    default:Date.now()
   }
 });
 

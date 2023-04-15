@@ -18,6 +18,13 @@ function adminRegisterValidation(){
     ]
 }
 
+function adminLoginValidation(){
+    return[
+        body("email","Email is Required").isEmail().withMessage("Email should be valid."),
+        body("password","Password is Required").isLength({min:6}).withMessage("Password Length should greater or equal to 6")
+    ]
+}
+
 function errorMiddleware(req,res,next){
     const errors = validationResult(req)
     if(!errors.isEmpty()){
@@ -26,4 +33,4 @@ function errorMiddleware(req,res,next){
     return next()
 }
 
-export {adminRegisterValidation,errorMiddleware}    
+export {adminRegisterValidation,adminLoginValidation,errorMiddleware}    
