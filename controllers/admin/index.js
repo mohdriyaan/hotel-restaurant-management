@@ -21,8 +21,8 @@ router.post("/register",
         // Checking if the user is already registered or Not
         let emailinDB = await adminModel.findOne({email})
         if(emailinDB){
-            console.error("User is Already Registered.Verify it Again.")
-            return res.status(401).json({mesage:"User Already Registered.Verify it Again."})
+            console.error("Admin is Already Registered.Verify it Again.")
+            return res.status(401).json({mesage:"Admin Already Registered.Verify it Again."})
         }
 
         // Password Hashing
